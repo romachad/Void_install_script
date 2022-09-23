@@ -70,5 +70,6 @@ mount -o rw,noatime /dev/${drive}2 /mnt/boot
 #End of mount
 
 #Base installation, here you can change to add whatever packages you prefer after the grub.
-XBPS_ARCH=$ARCH xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_64-efi vim neovim htop
+$(XBPS_ARCH=$ARCH)
+xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_64-efi vim neovim htop
 #End of Base install
