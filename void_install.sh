@@ -1,5 +1,5 @@
 #!/bin/sh
-# == MY VOID SETUP INSTALLER By XYZ == #
+# == MY VOID SETUP INSTALLER By ROMACHAD == #
 
 
 #INSERT VARIABLES HERE!
@@ -15,16 +15,16 @@ echo "Welcome to romachad moded void installer script"
 loadkeys br-abnt2
 # timedatectl set-ntp true
 lsblk
-echo -e "Choose the drive to install the VOID.\n\nChoose GPT table and create 3 partitions:"
-echo -e "1-> EFI patition with size of at lease +200M\n2-> Boot partition of at least +800M (this one as Linux filesystem)\n3-> The remainder as Linux filesystem"
-echo -e "\nChoose disk:"
+echo "Choose the drive to install the VOID.\n\nChoose GPT table and create 3 partitions:"
+echo "1-> EFI patition with size of at lease +200M\n2-> Boot partition of at least +800M (this one as Linux filesystem)\n3-> The remainder as Linux filesystem"
+echo "\nChoose disk:"
 read drive
 fdisk /dev/$drive
 t_part=$(lsblk | grep $drive|grep -v "^$drive"|wc -l)
-[ $t_part -ne 3 ] && echo -e "Its necessary 3 partitions! The $drive has only $t_part!\nStart the script again and fix this in the fdisk!" && exit 1;
+[ $t_part -ne 3 ] && echo "Its necessary 3 partitions! The $drive has only $t_part!\nStart the script again and fix this in the fdisk!" && exit 1;
 
 efi_part=$(fdisk -l /dev/$drive | grep "${drive}1"|grep EFI|wc -l)
-[ $efi_part -ne 1 ] && echo -e "There should be ONE EFI partition it was found: $efi_part!\nStart the script again and fix this in the fdisk!" && exit 1;
+[ $efi_part -ne 1 ] && echo "There should be ONE EFI partition it was found: $efi_part!\nStart the script again and fix this in the fdisk!" && exit 1;
 
 #Create the file systems!
 mkfs.vfat -nBOOT -F32 /dev/${drive}1
