@@ -5,6 +5,9 @@
 #INSERT VARIABLES HERE!
 #######################
 BTRFS_OPTS="rw,noatime,ssd,compress=zstd,space_cache,commit=120"
+REPO=https://repo-default.voidlinux.org/current
+#If installing musl change the value below to x86_64-musl
+ARCH=x86_64
 #######################
 
 #part1
@@ -65,3 +68,7 @@ mount -o rw,noatime /dev/${drive}1 /mnt/efi
 mkdir /mnt/boot
 mount -o rw,noatime /dev/${drive}2 /mnt/boot
 #End of mount
+
+#Base installation, here you can change to add whatever packages you prefer after the grub.
+XBPS_ARCH=$ARCH xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_64-efi
+#End of Base install
