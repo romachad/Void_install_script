@@ -57,7 +57,7 @@ mount -o $BTRFS_OPTS,subvol=@snapshots /dev/mapper/cryptroot /mnt/.snapshots
 mkdir -p /mnt/var/cache
 btrfs subvolume create /mnt/var/cache/xbps
 btrfs subvolume create /mnt/var/tmp
-btrfs subvolume create /mnt/var/srv
+btrfs subvolume create /mnt/srv
 
 mkdir /mnt/efi
 mount -o rw,noatime /dev/${drive}1 /mnt/efi
