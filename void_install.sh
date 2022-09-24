@@ -115,6 +115,6 @@ echo hostonly=yes >> /etc/dracut.conf
 
 #GRUB Install
 grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id="Void Linux"
-
+xbps-reconfigure -fa
 #Commented the exit to validate the execution so far
-#exit
+exit
