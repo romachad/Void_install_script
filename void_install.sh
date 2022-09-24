@@ -1,7 +1,5 @@
 #!/bin/sh
 # == MY VOID SETUP INSTALLER By ROMACHAD == #
-
-
 #INSERT VARIABLES HERE!
 #######################
 BTRFS_OPTS="rw,noatime,ssd,compress=zstd,space_cache,commit=120"
@@ -9,7 +7,7 @@ REPO=https://repo-default.voidlinux.org/current
 #If installing musl change the value below to x86_64-musl
 ARCH=x86_64
 #######################
-
+#The lines below until part2 begins will be deleted for part2 execution.
 #part1
 printf '\033c'
 echo "Welcome to romachad moded void installer script"
@@ -73,3 +71,16 @@ mount -o rw,noatime /dev/${drive}2 /mnt/boot
 $(XBPS_ARCH=$ARCH)
 xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_64-efi vim neovim htop
 #End of Base install
+
+#Prep for chroot
+for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir ; mount --make-rslave /mnt/$dir ; done
+cp /etc/resolv.conf /mnt/etc/
+sed '10,/^#part2$/d' `basename $0` > /mnt/void_install2.sh
+chmod 744 /mnt/void_install2.sh
+chroot /mnt/ ./void_install2.sh
+exit
+
+#part2
+printf '\033c'
+echo "Nothing here yet! =(\n\nFTS!"
+exit
