@@ -6,6 +6,8 @@ BTRFS_OPTS="rw,noatime,ssd,compress=zstd,space_cache,commit=120"
 REPO=https://repo-default.voidlinux.org/current
 #If installing musl change the value below to x86_64-musl
 ARCH=x86_64
+locale="LANG=en_US.UTF-8"
+libc_locale="en_US.UTF-8 UTF-8"
 #######################
 #The lines below until part2 begins will be deleted for part2 execution.
 #part1
@@ -76,11 +78,43 @@ xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_
 for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir ; mount --make-rslave /mnt/$dir ; done
 cp /etc/resolv.conf /mnt/etc/
 sed '10,/^#part2$/d' `basename $0` > /mnt/void_install2.sh
+echo $drive > /mnt/drive
 chmod 744 /mnt/void_install2.sh
 chroot /mnt/ ./void_install2.sh
+#End of chroot
 exit
 
 #part2
 printf '\033c'
-echo "Nothing here yet! =(\n\nFTS!"
-exit
+drive=$(cat drive)
+#echo "Nothing here yet! =(\n\nFTS!"
+echo "Type the hostname:"
+read hname
+echo $hname > /etc/hostname
+
+echo "$locale" > /etc/locale.conf
+echo "$libc_locale" >> /etc/defaults/libc-locales
+xbps-reconfigure -f glibc-locales
+
+echo "Set the password of root:"
+passwd
+
+mv /etc/fstab /etc/fstab_install.orig
+UEFI_UUID=$(blkid -s UUID -o value /dev/${drive}1)
+GRUB_UUID=$(blkid -s UUID -o value /dev/${drive}2)
+ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot)
+cat /etc/fstab_install.orig |grep "^#" > /etc/fstab
+echo "UUID=$ROOT_UUID	/	btrfs	$BTRFS_OPTS,subvol=@	0	1" >> /etc/fstab
+echo "UUID=$UEFI_UUID	/efi	vfat	defaults,noatime	0	2" >> /etc/fstab
+echo "UUID=$GRUB_UUID	/boot	ext2	defaults,noatime	0	2" >> /etc/fstab
+echo "UUID=$ROOT_UUID	/home	btrfs	$BTRFS_OPTS,subvol=@home	0	2" >> /etc/fstab
+echo "UUID=$ROOT_UUID	/.snapshots	btrfs	$BTRFS_OPTS,subvol=@snapshots	0	2" >> /etc/fstab
+cat /etc/fstab_install.orig |grep -v "^#" >> /etc/fstab
+
+echo hostonly=yes >> /etc/dracut.conf
+
+#GRUB Install
+grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id="Void Linux"
+
+#Commented the exit to validate the execution so far
+#exit
