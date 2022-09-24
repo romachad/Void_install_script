@@ -93,7 +93,7 @@ read hname
 echo $hname > /etc/hostname
 
 echo "$locale" > /etc/locale.conf
-echo "$libc_locale" >> /etc/defaults/libc-locales
+echo "$libc_locale" >> /etc/default/libc-locales
 xbps-reconfigure -f glibc-locales
 
 echo "Set the password of root:"
