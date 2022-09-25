@@ -8,14 +8,20 @@ REPO=https://repo-default.voidlinux.org/current
 ARCH=x86_64
 locale="LANG=en_US.UTF-8"
 libc_locale="en_US.UTF-8 UTF-8"
+Groups="wheel,audio,video,kvm"
+Keyboard_layout=br-abnt2
+Timezone=America/Sao_Paulo
+
+
+
+
+
 #######################
 #The lines below until part2 begins will be deleted for part2 execution.
 #part1
 printf '\033c'
 echo "Welcome to romachad moded void installer script"
-#sed -i "s/^#ParallelDownloads = 5$/ParallelDownloads = 15/" /etc/pacman.conf
-#pacman --noconfirm -Sy
-loadkeys br-abnt2
+#loadkeys br-abnt2
 # timedatectl set-ntp true
 lsblk
 echo "Choose the drive to install the VOID.\n\nChoose GPT table and create 3 partitions:"
@@ -71,17 +77,18 @@ mount -o rw,noatime /dev/${drive}2 /mnt/boot
 
 #Base installation, here you can change to add whatever packages you prefer after the grub.
 $(XBPS_ARCH=$ARCH)
-xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_64-efi vim neovim htop
+xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_64-efi #vim neovim htop
 #End of Base install
 
 #Prep for chroot
 for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir ; mount --make-rslave /mnt/$dir ; done
 cp /etc/resolv.conf /mnt/etc/
-sed '10,/^#part2$/d' `basename $0` > /mnt/void_install2.sh
+sed '20,/^#part2$/d' `basename $0` > /mnt/void_install2.sh
 echo $drive > /mnt/drive
 chmod 744 /mnt/void_install2.sh
 chroot /mnt/ ./void_install2.sh
 #End of chroot
+rm -f /mnt/void_install2.sh
 exit
 
 #part2
@@ -91,6 +98,18 @@ drive=$(cat drive)
 echo "Type the hostname:"
 read hname
 echo $hname > /etc/hostname
+echo "\nType the user login:"
+read usrlogin
+useradd -m -G $Groups -s /bin/bash $usrlogin
+echo "\nChoose the password for $usrlogin:"
+passwd $usrlogin
+
+#Timezone and key maps ajustment
+cp /etc/rc.conf /etc/rc.conf.orig
+cat /etc/rc.conf |sed "s/^#KEYMAP=\"us\"/KEYMAP=$Keyboard_layout" > /etc/rc.conf.new
+mv /etc/rc.conf.new /etc/rc.conf
+cat /etc/rc.conf |sed "s/^#TIMEZONE=\"Europe\/Madrid\"/TIMEZONE=$Timezone" > /etc/rc.conf.new
+mv /etc/rc.conf.new /etc/rc.conf
 
 echo "$locale" > /etc/locale.conf
 echo "$libc_locale" >> /etc/default/libc-locales
@@ -113,8 +132,45 @@ cat /etc/fstab_install.orig |grep -v "^#" >> /etc/fstab
 
 echo hostonly=yes >> /etc/dracut.conf
 
+#Adding the non free repo and installing further packages:
+xbps-install -Syu void-repo-nonfree
+#ADD HERE check for pkgs list to be installed!
+
+#Add services on the startup!
+#WARNING: This is not and ideal way to get the interface name, however for me I know that there is only one interface.
+Interface=$(ip link show|grep "^.:"|grep -v "lo"|awk '{print $2}'|sed 's/://')
+cp -R /etc/sv/dhcpcd-eth0 /etc/sv/dhcpcd-$Interface
+sed -i "s/eth0/$Interface/" /etc/sv/dhcpcd-$Interface/run
+ln -s /etc/sv/dhcpcd-$Interface /var/service/
+
+#SSH server
+ln -s /etc/sv/sshd /var/service
+
+#iptables:
+ln -s /etc/sv/ip6tables /var/service
+ln -s /etc/sv/iptables /var/service
+cp /etc/iptables/simple_firewall.rules /etc/iptables/iptables.rules
+cp /etc/iptables/simple_firewall.rules /etc/iptables/ip6tables.rules
+ip6tables -P OUTPUT DROP
+ip6tables -P INPUT DROP
+ip6tables -P FORWARD DROP
+ip6tables -t mangle -P INPUT DROP
+ip6tables -t mangle -P PREROUTING DROP
+ip6tables -t mangle -P FORWARD DROP
+ip6tables -t mangle -P OUTPUT DROP
+ip6tables -t mangle -P POSTROUTING DROP
+ip6tables -t raw -P PREROUTING DROP
+ip6tables -t raw -P OUTPUT DROP
+ip6tables-save > /etc/iptables/ip6tables.rules
+
+#Chronyd (If not installing comment the line below)
+ln -s /etc/sv/chronyd /var/service
+
 #GRUB Install
 grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id="Void Linux"
 xbps-reconfigure -fa
+
+#Clean up
+rm -f drive
 #Commented the exit to validate the execution so far
 exit
