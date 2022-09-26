@@ -11,7 +11,7 @@ libc_locale="en_US.UTF-8 UTF-8"
 Groups="wheel,audio,video,kvm"
 Keyboard_layout=br-abnt2
 Timezone=America/Sao_Paulo
-
+Packages=Packages
 
 
 
@@ -83,6 +83,7 @@ xbps-install -Sy -R "$REPO" -r /mnt base-system btrfs-progs cryptsetup grub-x86_
 #Prep for chroot
 for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir ; mount --make-rslave /mnt/$dir ; done
 cp /etc/resolv.conf /mnt/etc/
+[ -f "$Packages" ] && cp $Packages /mnt/
 sed '20,/^#part2$/d' `basename $0` > /mnt/void_install2.sh
 echo $drive > /mnt/drive
 chmod 744 /mnt/void_install2.sh
@@ -106,9 +107,9 @@ passwd $usrlogin
 
 #Timezone and key maps ajustment
 cp /etc/rc.conf /etc/rc.conf.orig
-cat /etc/rc.conf |sed "s/^#KEYMAP=\"us\"/KEYMAP=$Keyboard_layout" > /etc/rc.conf.new
+cat /etc/rc.conf |sed "s/^#KEYMAP=\"..\"/KEYMAP=$Keyboard_layout/" > /etc/rc.conf.new
 mv /etc/rc.conf.new /etc/rc.conf
-cat /etc/rc.conf |sed "s/^#TIMEZONE=\"Europe\/Madrid\"/TIMEZONE=$Timezone" > /etc/rc.conf.new
+cat /etc/rc.conf |sed "s/^#TIMEZONE=\"Europe\/Madrid\"/TIMEZONE=$Timezone/" > /etc/rc.conf.new
 mv /etc/rc.conf.new /etc/rc.conf
 
 echo "$locale" > /etc/locale.conf
@@ -134,7 +135,7 @@ echo hostonly=yes >> /etc/dracut.conf
 
 #Adding the non free repo and installing further packages:
 xbps-install -Syu void-repo-nonfree
-#ADD HERE check for pkgs list to be installed!
+[ -f "$Packages" ] && xbps-install -Sy $(cat $Packages| tr '\n' ' ')
 
 #Add services on the startup!
 #WARNING: This is not and ideal way to get the interface name, however for me I know that there is only one interface.
@@ -172,5 +173,4 @@ xbps-reconfigure -fa
 
 #Clean up
 rm -f drive
-#Commented the exit to validate the execution so far
 exit
