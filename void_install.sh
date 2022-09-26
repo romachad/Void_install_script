@@ -109,7 +109,7 @@ passwd $usrlogin
 cp /etc/rc.conf /etc/rc.conf.orig
 cat /etc/rc.conf |sed "s/^#KEYMAP=\"..\"/KEYMAP=$Keyboard_layout/" > /etc/rc.conf.new
 mv /etc/rc.conf.new /etc/rc.conf
-cat /etc/rc.conf |sed "s/^#TIMEZONE=\"Europe\/Madrid\"/TIMEZONE=$Timezone/" > /etc/rc.conf.new
+cat /etc/rc.conf |sed "s|^#TIMEZONE=\"Europe\/Madrid\"|TIMEZONE=$Timezone|" > /etc/rc.conf.new
 mv /etc/rc.conf.new /etc/rc.conf
 
 echo "$locale" > /etc/locale.conf
