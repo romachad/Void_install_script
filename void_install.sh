@@ -138,11 +138,14 @@ xbps-install -Syu void-repo-nonfree
 [ -f "$Packages" ] && xbps-install -Sy $(cat $Packages| tr '\n' ' ')
 
 #Add services on the startup!
-#WARNING: This is not and ideal way to get the interface name, however for me I know that there is only one interface.
-Interface=$(ip link show|grep "^.:"|grep -v "lo"|awk '{print $2}'|sed 's/://')
-cp -R /etc/sv/dhcpcd-eth0 /etc/sv/dhcpcd-$Interface
-sed -i "s/eth0/$Interface/" /etc/sv/dhcpcd-$Interface/run
-ln -s /etc/sv/dhcpcd-$Interface /var/service/
+##WARNING: This is not and ideal way to get the interface name, however for me I know that there is only one interface.
+#Interface=$(ip link show|grep "^.:"|grep -v "lo"|awk '{print $2}'|sed 's/://')
+#cp -R /etc/sv/dhcpcd-eth0 /etc/sv/dhcpcd-$Interface
+#sed -i "s/eth0/$Interface/" /etc/sv/dhcpcd-$Interface/run
+#ln -s /etc/sv/dhcpcd-$Interface /var/service/
+
+#Remove option above due to changing the grub to use the good old interce names:
+ln -s /etc/sv/dhcpd-eth0 /var/service
 
 #SSH server
 ln -s /etc/sv/sshd /var/service
@@ -152,21 +155,24 @@ ln -s /etc/sv/ip6tables /var/service
 ln -s /etc/sv/iptables /var/service
 cp /etc/iptables/simple_firewall.rules /etc/iptables/iptables.rules
 cp /etc/iptables/simple_firewall.rules /etc/iptables/ip6tables.rules
-ip6tables -P OUTPUT DROP
-ip6tables -P INPUT DROP
-ip6tables -P FORWARD DROP
-ip6tables -t mangle -P INPUT DROP
-ip6tables -t mangle -P PREROUTING DROP
-ip6tables -t mangle -P FORWARD DROP
-ip6tables -t mangle -P OUTPUT DROP
-ip6tables -t mangle -P POSTROUTING DROP
-ip6tables -t raw -P PREROUTING DROP
-ip6tables -t raw -P OUTPUT DROP
-ip6tables-save > /etc/iptables/ip6tables.rules
+#ip6tables -P OUTPUT DROP
+#ip6tables -P INPUT DROP
+#ip6tables -P FORWARD DROP
+#ip6tables -t mangle -P INPUT DROP
+#ip6tables -t mangle -P PREROUTING DROP
+#ip6tables -t mangle -P FORWARD DROP
+#ip6tables -t mangle -P OUTPUT DROP
+#ip6tables -t mangle -P POSTROUTING DROP
+#ip6tables -t raw -P PREROUTING DROP
+#ip6tables -t raw -P OUTPUT DROP
+#ip6tables-save > /etc/iptables/ip6tables.rules
 
 #Chronyd (If not installing comment the line below)
 ln -s /etc/sv/chronyd /var/service
 
+#Change GRUB config so that network interfaces have good old eth names:
+cp /etc/default/grub /etc/default/grub.orig
+cat /etc/default/grub.orig | sed 's/loglevel=4/loglevel=4 net.ifnames=0/' > /etc/default/grub
 #GRUB Install
 grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id="Void Linux"
 xbps-reconfigure -fa
