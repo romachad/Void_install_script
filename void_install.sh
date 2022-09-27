@@ -145,7 +145,7 @@ xbps-install -Syu void-repo-nonfree
 #ln -s /etc/sv/dhcpcd-$Interface /var/service/
 
 #Remove option above due to changing the grub to use the good old interce names:
-ln -s /etc/sv/dhcpd-eth0 /var/service
+ln -s /etc/sv/dhcpcd-eth0 /var/service
 
 #SSH server
 ln -s /etc/sv/sshd /var/service
