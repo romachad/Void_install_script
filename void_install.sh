@@ -32,17 +32,21 @@ fdisk /dev/$drive
 t_part=$(lsblk | grep $drive|grep -v "^$drive"|wc -l)
 [ $t_part -ne 3 ] && echo "Its necessary 3 partitions! The $drive has only $t_part!\nStart the script again and fix this in the fdisk!" && exit 1;
 
-efi_part=$(fdisk -l /dev/$drive | grep "${drive}1"|grep EFI|wc -l)
+efi_part=$(fdisk -l /dev/$drive | grep $drive |grep EFI|wc -l)
 [ $efi_part -ne 1 ] && echo "There should be ONE EFI partition it was found: $efi_part!\nStart the script again and fix this in the fdisk!" && exit 1;
 
+drive1=$(fdisk -l /dev/$drive| grep "^/dev/$drive" |grep "EFI"|awk '{print $1}'|sed 's/^\/dev\///')
+drive2=$(fdisk -l /dev/$drive| grep "^/dev/$drive" |grep -v "EFI"|awk '{print $1}'|sed 's/^\/dev\///'|sed 2d)
+drive3=$(fdisk -l /dev/$drive| grep "^/dev/$drive" |grep -v "EFI"|awk '{print $1}'|sed 's/^\/dev\///'|sed 1d)
+
 #Create the file systems!
-mkfs.vfat -nBOOT -F32 /dev/${drive}1
-mkfs.ext2 -L grub /dev/${drive}2
+mkfs.vfat -nBOOT -F32 /dev/${drive1}
+mkfs.ext2 -L grub /dev/${drive2}
 
 echo "Creating LUKS-encrypted root partition."
-cryptsetup luksFormat --type=luks -s=512 /dev/${drive}3
+cryptsetup luksFormat --type=luks -s=512 /dev/${drive3}
 echo "Type the password again to open the partition:"
-cryptsetup open /dev/${drive}3 cryptroot
+cryptsetup open /dev/${drive3} cryptroot
 mkfs.btrfs -L void /dev/mapper/cryptroot
 echo "Partitions created"
 #Partitions created.
@@ -69,10 +73,10 @@ btrfs subvolume create /mnt/var/tmp
 btrfs subvolume create /mnt/srv
 
 mkdir /mnt/efi
-mount -o rw,noatime /dev/${drive}1 /mnt/efi
+mount -o rw,noatime /dev/${drive1} /mnt/efi
 
 mkdir /mnt/boot
-mount -o rw,noatime /dev/${drive}2 /mnt/boot
+mount -o rw,noatime /dev/${drive2} /mnt/boot
 #End of mount
 
 #Base installation, here you can change to add whatever packages you prefer after the grub.
@@ -85,7 +89,8 @@ for dir in dev proc sys run; do mount --rbind /$dir /mnt/$dir ; mount --make-rsl
 cp /etc/resolv.conf /mnt/etc/
 [ -f "$Packages" ] && cp $Packages /mnt/
 sed '20,/^#part2$/d' `basename $0` > /mnt/void_install2.sh
-echo $drive > /mnt/drive
+echo ${drive1} > /mnt/drive1
+echo ${drive2} > /mnt/drive2
 chmod 744 /mnt/void_install2.sh
 chroot /mnt/ ./void_install2.sh
 #End of chroot
@@ -94,7 +99,8 @@ exit
 
 #part2
 printf '\033c'
-drive=$(cat drive)
+drive1=$(cat drive1)
+drive2=$(cat drive2)
 #echo "Nothing here yet! =(\n\nFTS!"
 echo "Type the hostname:"
 read hname
@@ -120,8 +126,8 @@ echo "Set the password of root:"
 passwd
 
 mv /etc/fstab /etc/fstab_install.orig
-UEFI_UUID=$(blkid -s UUID -o value /dev/${drive}1)
-GRUB_UUID=$(blkid -s UUID -o value /dev/${drive}2)
+UEFI_UUID=$(blkid -s UUID -o value /dev/${drive1})
+GRUB_UUID=$(blkid -s UUID -o value /dev/${drive2})
 ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/cryptroot)
 cat /etc/fstab_install.orig |grep "^#" > /etc/fstab
 echo "UUID=$ROOT_UUID	/	btrfs	$BTRFS_OPTS,subvol=@	0	1" >> /etc/fstab
@@ -178,5 +184,6 @@ grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id="Void Linu
 xbps-reconfigure -fa
 
 #Clean up
-rm -f drive
+rm -f drive1
+rm -f drive2
 exit
