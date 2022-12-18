@@ -21,8 +21,6 @@ Packages=Packages
 #part1
 printf '\033c'
 echo "Welcome to romachad moded void installer script"
-#loadkeys br-abnt2
-# timedatectl set-ntp true
 lsblk
 echo "Choose the drive to install the VOID.\n\nChoose GPT table and create 3 partitions:"
 echo "1-> EFI patition with size of at lease +200M\n2-> Boot partition of at least +800M (this one as Linux filesystem)\n3-> The remainder as Linux filesystem"
@@ -144,13 +142,7 @@ xbps-install -Syu void-repo-nonfree
 [ -f "$Packages" ] && xbps-install -Sy $(cat $Packages| tr '\n' ' ')
 
 #Add services on the startup!
-##WARNING: This is not and ideal way to get the interface name, however for me I know that there is only one interface.
-#Interface=$(ip link show|grep "^.:"|grep -v "lo"|awk '{print $2}'|sed 's/://')
-#cp -R /etc/sv/dhcpcd-eth0 /etc/sv/dhcpcd-$Interface
-#sed -i "s/eth0/$Interface/" /etc/sv/dhcpcd-$Interface/run
-#ln -s /etc/sv/dhcpcd-$Interface /var/service/
-
-#Remove option above due to changing the grub to use the good old interce names:
+#Eth0 dhcp start up
 ln -s /etc/sv/dhcpcd-eth0 /var/service
 
 #SSH server
@@ -161,17 +153,6 @@ ln -s /etc/sv/ip6tables /var/service
 ln -s /etc/sv/iptables /var/service
 cp /etc/iptables/simple_firewall.rules /etc/iptables/iptables.rules
 cp /etc/iptables/simple_firewall.rules /etc/iptables/ip6tables.rules
-#ip6tables -P OUTPUT DROP
-#ip6tables -P INPUT DROP
-#ip6tables -P FORWARD DROP
-#ip6tables -t mangle -P INPUT DROP
-#ip6tables -t mangle -P PREROUTING DROP
-#ip6tables -t mangle -P FORWARD DROP
-#ip6tables -t mangle -P OUTPUT DROP
-#ip6tables -t mangle -P POSTROUTING DROP
-#ip6tables -t raw -P PREROUTING DROP
-#ip6tables -t raw -P OUTPUT DROP
-#ip6tables-save > /etc/iptables/ip6tables.rules
 
 #Chronyd (If not installing comment the line below)
 ln -s /etc/sv/chronyd /var/service
