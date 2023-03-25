@@ -139,7 +139,7 @@ echo hostonly=yes >> /etc/dracut.conf
 
 #Adding the non free repo and installing further packages:
 xbps-install -Syu void-repo-nonfree
-[ -f "$Packages" ] && xbps-install -Sy $(cat $Packages| tr '\n' ' ')
+[ -f "$Packages" ] && cat $Packages | while read pkg; do xbps-install -Sy $pkg; done
 
 #Add services on the startup!
 #Eth0 dhcp start up
