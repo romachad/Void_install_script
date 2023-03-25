@@ -2,7 +2,7 @@
 # == MY VOID SETUP INSTALLER By ROMACHAD == #
 #INSERT VARIABLES HERE!
 #######################
-BTRFS_OPTS="rw,noatime,ssd,compress=zstd,space_cache,commit=120"
+BTRFS_OPTS="rw,noatime,ssd,compress=zstd,commit=120"
 REPO=https://repo-default.voidlinux.org/current
 #If installing musl change the value below to x86_64-musl
 ARCH=x86_64
