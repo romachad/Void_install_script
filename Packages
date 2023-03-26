@@ -4,6 +4,7 @@ bc
 chrony
 deluge
 firefox
+fuse-sshfs
 gcc
 git
 glibc
