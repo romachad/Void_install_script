@@ -36,5 +36,4 @@ libXft-devel
 libXinerama
 libXinerama-devel
 pkg-config
-harfbuzz
-harfbuzz-devel
+stow
