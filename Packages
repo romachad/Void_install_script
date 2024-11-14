@@ -37,3 +37,4 @@ libXinerama
 libXinerama-devel
 pkg-config
 stow
+patch
