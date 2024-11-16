@@ -38,3 +38,5 @@ libXinerama-devel
 pkg-config
 stow
 patch
+xwallpaper
+xcompmgr
