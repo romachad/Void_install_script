@@ -109,6 +109,16 @@ useradd -m -G $Groups -s /bin/bash $usrlogin
 echo "\nChoose the password for $usrlogin:"
 passwd $usrlogin
 
+# Folders for the user
+for dir in bin src scripts; do
+	mkdir -p /home/$usrlogin/.local/$dir
+	chown $usrlogin: /home/$usrlogin/.local/$dir
+done
+
+# Add User to sudo for reboot/poweroff:
+echo "$usrlogin ALL=(ALL) NOPASSWD: /sbin/reboot, /sbin/poweroff" > "/etc/sudoers.d/$usrlogin-reboot"
+
+
 #Timezone and key maps ajustment
 cp /etc/rc.conf /etc/rc.conf.orig
 cat /etc/rc.conf |sed "s/^#KEYMAP=\"..\"/KEYMAP=$Keyboard_layout/" > /etc/rc.conf.new
