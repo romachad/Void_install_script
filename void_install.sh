@@ -26,7 +26,34 @@ echo "Choose the drive to install the VOID.\n\nChoose GPT table and create 3 par
 echo "1-> EFI patition with size of at lease +200M\n2-> Boot partition of at least +800M (this one as Linux filesystem)\n3-> The remainder as Linux filesystem"
 echo "\nChoose disk:"
 read drive
-fdisk /dev/$drive
+#fdisk /dev/$drive
+
+xbps-install -Sy parted
+
+# Confirm the selected drive
+echo "You selected: /dev/$drive\nThis will erase all data on the drive!"
+read -rp "Are you sure? (yes/no): " confirm
+
+if [ "$confirm" != "yes" ]; then
+	echo "Aborting install."
+	exit 1
+fi
+
+# Start partitioning with parted
+echo "Starting partitioning on /dev/$drive..."
+parted /dev/$drive --script mklabel gpt \
+	mkpart ESP fat32 1MiB 201MiB \
+	set 1 boot on \
+	mkpart primary ext4 201MiB 1001MiB \
+	mkpart primary ext4 1001MiB 100%
+
+echo "Partitioning complete."
+
+# Inform the user about the partition layout
+echo "Partition layout on /dev/$drive:"
+parted /dev/$drive print
+
+
 t_part=$(lsblk | grep $drive|grep -v "^$drive"|wc -l)
 [ $t_part -ne 3 ] && echo "Its necessary 3 partitions! The $drive has only $t_part!\nStart the script again and fix this in the fdisk!" && exit 1;
 
@@ -99,7 +126,6 @@ exit
 printf '\033c'
 drive1=$(cat drive1)
 drive2=$(cat drive2)
-#echo "Nothing here yet! =(\n\nFTS!"
 echo "Type the hostname:"
 read hname
 echo $hname > /etc/hostname
@@ -118,13 +144,16 @@ done
 # Add User to sudo for reboot/poweroff:
 echo "$usrlogin ALL=(ALL) NOPASSWD: /sbin/reboot, /sbin/poweroff" > "/etc/sudoers.d/$usrlogin-reboot"
 
+# Add User to autologin on tty1
+cp /etc/sv/agetty-tty1/conf /etc/sv/agetty-tty1/conf.orig
+sed -i "s/GETTY_ARGS=\"--noclear\"/GETTY_ARGS=\"--noclear --autologin $usrlogin\"/" /etc/sv/agetty-tty1/conf
 
 #Timezone and key maps ajustment
 cp /etc/rc.conf /etc/rc.conf.orig
-cat /etc/rc.conf |sed "s/^#KEYMAP=\"..\"/KEYMAP=$Keyboard_layout/" > /etc/rc.conf.new
-mv /etc/rc.conf.new /etc/rc.conf
-cat /etc/rc.conf |sed "s|^#TIMEZONE=\"Europe\/Madrid\"|TIMEZONE=$Timezone|" > /etc/rc.conf.new
-mv /etc/rc.conf.new /etc/rc.conf
+sed -i \
+    -e "s/^#KEYMAP=\"..\"/KEYMAP=\"$Keyboard_layout\"/" \
+    -e "s|^#TIMEZONE=\"Europe/Madrid\"|TIMEZONE=\"$Timezone\"|" \
+    /etc/rc.conf
 
 echo "$locale" > /etc/locale.conf
 echo "$libc_locale" >> /etc/default/libc-locales
