@@ -193,6 +193,9 @@ ln -s /etc/sv/iptables /var/service
 cp /etc/iptables/simple_firewall.rules /etc/iptables/iptables.rules
 cp /etc/iptables/simple_firewall.rules /etc/iptables/ip6tables.rules
 
+#DBUS
+ln -s /etc/sv/dbus /var/service
+
 #Chronyd (If not installing comment the line below)
 ln -s /etc/sv/chronyd /var/service
 
